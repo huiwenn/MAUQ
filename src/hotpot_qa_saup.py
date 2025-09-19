@@ -19,6 +19,7 @@ import logging
 
 # Import our SAUP implementation
 from saup import SAUP, AgentStep, SingleStepUncertainty
+from agents import ReActAgentß
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
