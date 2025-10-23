@@ -1,6 +1,23 @@
 """
 UProp: Uncertainty Propagation for LLMs in Multi-Step Agentic Decision-Making
 Implementation based on the paper by Duan et al. (2025)
+
+IMPORTANT: This is one of THREE uncertainty quantification variants in MAUQ.
+See ../UQ_VARIANTS.md for detailed comparison of:
+- UProp (this file): Trajectory-based sequential reasoning
+- Graph-Based UQ: Multi-agent debate analysis
+- DAG-Based UQ: Universal graph-structured reasoning
+
+Key UProp Formulations:
+    Intrinsic Uncertainty:  IU_t = (1/N) Σ_n (-log p(y_t^(n)) / |y_t^(n)|)
+    Extrinsic Uncertainty:  EU_t = Σ_{i<t} PMI(y_t; y_i)
+    PMI Kernel:            K_N(d) = (1/√(2π)) * exp(-d²/2) / N
+    Step Normalization:     σ_t = 1 + EU_t/IU_t
+
+Use this variant for:
+- Sequential reasoning tasks (HotpotQA, GSM8K, MATH)
+- When log probabilities are available
+- When you need step-by-step uncertainty decomposition
 """
 
 import numpy as np
@@ -365,3 +382,5 @@ class SemanticEntropy:
         
         # Calculate entropy
         return entropy(cluster_probs)
+
+
