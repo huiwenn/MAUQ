@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "rigs": {
+    "mauq": {
+      "git_url": "https://github.com/huiwenn/MAUQ",
+      "added_at": "2026-04-15T16:14:54.860651-07:00",
+      "beads": {
+        "repo": "",
+        "prefix": "ma"
+      }
+    }
+  }
+}

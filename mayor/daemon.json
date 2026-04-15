@@ -1,0 +1,31 @@
+{
+  "heartbeat": {
+    "enabled": true,
+    "interval": "3m"
+  },
+  "patrols": {
+    "deacon": {
+      "enabled": true,
+      "interval": "5m",
+      "agent": "deacon"
+    },
+    "refinery": {
+      "agent": "refinery",
+      "enabled": true,
+      "interval": "5m",
+      "rigs": [
+        "mauq"
+      ]
+    },
+    "witness": {
+      "agent": "witness",
+      "enabled": true,
+      "interval": "5m",
+      "rigs": [
+        "mauq"
+      ]
+    }
+  },
+  "type": "daemon-patrol-config",
+  "version": 1
+}
