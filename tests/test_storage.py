@@ -9,7 +9,7 @@ def test_store_and_retrieve_result():
         rows = store.get_results(dataset="mmlu", question_id="q1")
         assert len(rows) == 1
         assert rows[0]["answer_extracted"] == "4"
-        assert rows[0]["correct"] is True
+        assert bool(rows[0]["correct"]) is True
 
 def test_checkpoint_idempotent():
     with tempfile.TemporaryDirectory() as td:
