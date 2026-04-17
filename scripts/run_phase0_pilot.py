@@ -33,14 +33,22 @@ def run_single_model(model_name, model_id, output_dir):
     model_results = []
     for qi, q in enumerate(questions):
         answers = []
+        raw_responses = []
         for rep in range(n_reps):
             try:
                 resp = agent.invoke(q["question"])
                 ans = extract_answer(resp.text, task_type="mcq")
                 answers.append(ans)
+                raw_responses.append({
+                    "text": resp.text,
+                    "input_tokens": resp.input_tokens,
+                    "output_tokens": resp.output_tokens,
+                    "latency_ms": resp.latency_ms,
+                })
             except Exception as e:
                 print(f"  Error on {q['question_id']} rep {rep}: {e}")
                 answers.append("ERROR")
+                raw_responses.append({"text": f"ERROR: {e}", "input_tokens": 0, "output_tokens": 0, "latency_ms": 0})
 
         unique = len(set(a for a in answers if a != "ERROR"))
         most_common = Counter(answers).most_common(1)[0]
@@ -49,6 +57,7 @@ def run_single_model(model_name, model_id, output_dir):
             "question_id": q["question_id"],
             "correct_answer": q["correct_answer"],
             "answers": answers,
+            "raw_responses": raw_responses,
             "n_unique": unique,
             "most_common": most_common[0],
             "most_common_count": most_common[1],

@@ -13,6 +13,7 @@ class DebateOrchestrator:
         system_prompt = build_system_prompt(task_type)
         n_agents = len(self.agents)
         round_responses = []
+        traces = []
 
         for round_num in range(n_rounds):
             current_round = {}
@@ -47,6 +48,16 @@ class DebateOrchestrator:
                     other_responses=other_responses,
                 )
                 current_round[agent_idx] = response.text
+                traces.append({
+                    "round": round_num,
+                    "agent_idx": agent_idx,
+                    "agent_id": agent.agent_id,
+                    "model_id": agent.model_id,
+                    "text": response.text,
+                    "input_tokens": response.input_tokens,
+                    "output_tokens": response.output_tokens,
+                    "latency_ms": response.latency_ms,
+                })
 
             round_responses.append(current_round)
 
@@ -60,5 +71,6 @@ class DebateOrchestrator:
             "responses": all_responses,
             "final_answers": final_answers,
             "round_responses": round_responses,
+            "traces": traces,
             "n_rounds": n_rounds,
         }
