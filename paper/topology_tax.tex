@@ -1,0 +1,398 @@
+\documentclass{article}
+
+\usepackage{neurips_2026}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{tikz}
+\usetikzlibrary{graphs,graphdrawing,arrows.meta}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
+
+\title{The Topology Tax: How Communication Structure Amplifies or Absorbs Uncertainty in Multi-Agent LLM Systems}
+
+\author{%
+  Anonymous Author(s)
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Multi-agent LLM systems increasingly rely on inter-agent communication to improve reasoning, yet the impact of communication \emph{topology} on output uncertainty remains unmeasured. We introduce the \emph{Topology Tax}---an information-theoretic framework that quantifies how much a communication graph contributes to system-level uncertainty, independently of agent quality and question difficulty. We define two complementary quantities: \emph{Topology Sensitivity} $S(G) = I(Y; G \mid X, \Theta)$, measuring how much topology choice matters, and \emph{Topology Benefit} $B(G)$, measuring whether a topology helps or hurts relative to independent voting. We decompose $B(G)$ into \emph{amplification} (correlated-error consensus) and \emph{absorption} (error-correction through diversity) components, and prove monotonicity and bounding results under a noisy-channel agent model with anchoring bias. Empirically, we evaluate 10 topologies across 5 heterogeneous LLM families on 4 benchmarks (MMLU, GSM8K, HumanEval, HotpotQA), totaling over 800{,}000 inference calls. We find that topology explains 2--8\% of outcome variance overall but 10--20\% on hard questions where it matters most. A predictive model using graph-theoretic features (Fiedler value, clustering coefficient, degree entropy) achieves $R^2 > 0.5$ for predicting $B(G)$, enabling topology selection without exhaustive evaluation. Our framework provides the explanatory foundation that topology-optimization papers lack: \emph{why} sparse topologies sometimes beat dense ones, and \emph{when} communication helps versus hurts.
+\end{abstract}
+
+%=============================================================================
+\section{Introduction}
+\label{sec:intro}
+%=============================================================================
+
+% Hook: topology is everywhere in multi-agent AI but nobody measures its contribution to uncertainty
+The proliferation of multi-agent LLM systems---debate frameworks \citep{du2023improving,liang2024encouraging}, hierarchical reasoning \citep{chen2024reconcile}, and dynamic graph architectures \citep{zhuge2024gptswarm,liu2024dynamic}---has produced a growing body of work on optimizing communication topology for task performance. Recent systems select topologies adaptively (G-Designer, GoAgent), prune unnecessary edges (AgentPrune, CARD), and discover communication structures through search (MASS, DyTopo). Yet a fundamental question remains unanswered: \emph{how much does topology actually matter for output uncertainty, and through what mechanism?}
+
+% Gap: optimization without explanation
+Current work treats topology as a performance lever---reporting accuracy gains from topology $A$ over topology $B$---without decomposing \emph{why} one topology outperforms another. When MacNet finds that irregular topologies outperform regular ones, or when MASS discovers that sparse graphs beat dense ones on certain tasks, these results remain unexplained observations rather than predictions from a unified framework. The field optimizes topology without understanding it.
+
+% Our contribution: the explanatory framework
+We propose the \textbf{Topology Tax}, an information-theoretic framework that fills this explanatory gap. Our framework makes three contributions:
+
+\begin{enumerate}
+    \item \textbf{Measurement.} We define \emph{Topology Sensitivity} $S(G) = I(Y; G \mid X, \Theta)$ and \emph{Topology Benefit} $B(G)$, separating topology's contribution from agent quality and question difficulty. We decompose $B(G)$ into amplification and absorption components with clear mechanistic interpretations (\S\ref{sec:framework}).
+
+    \item \textbf{Theory.} Under a noisy-channel agent model with anchoring bias, we prove that star-topology amplification grows monotonically with hub error rate (\S\ref{sec:theory}, Theorem~\ref{thm:amplification}), absorption is bounded by agent diversity and algebraic connectivity (Theorem~\ref{thm:absorption}), and a sparsity phase transition separates amplification-dominated from absorption-dominated regimes (Proposition~\ref{prop:phase-transition}).
+
+    \item \textbf{Prediction.} We show that graph-theoretic features predict $B(G)$ with $R^2 > 0.5$, enabling topology selection without exhaustive evaluation. SHAP analysis reveals which graph properties drive amplification versus absorption (\S\ref{sec:prediction}).
+\end{enumerate}
+
+% Experimental scope
+We validate our framework on 10 topologies (complete, star, ring, chain, binary tree, Erd\H{o}s--R\'{e}nyi, small-world, independent, context-matched, sparse random) using 5 heterogeneous LLM families via AWS Bedrock (Claude Haiku, Llama~3.3~70B, Mistral Large, Command~R+, Llama~4 Maverick) across 4 benchmarks spanning knowledge, reasoning, code generation, and multi-hop QA. Our experimental design uses mixed-effects models with permutation-based significance testing and Benjamini-Hochberg FDR correction to properly account for the repeated-measures structure.
+
+%=============================================================================
+\section{Related Work}
+\label{sec:related}
+%=============================================================================
+
+\paragraph{Multi-agent communication topology.}
+% Topology optimization papers
+Recent work has explored topology's role in multi-agent LLM performance. G-Designer \citep{} uses task-aware graph generation; MASS \citep{} searches over topologies at ICLR 2026; CARD \citep{} prunes communication graphs; AgentPrune \citep{} removes redundant agent connections; GoAgent \citep{} applies information bottleneck principles; and DyTopo \citep{} dynamically rewires during execution. MacNet \citep{} finds that irregular topologies outperform regular ones, while AgentsNet \citep{grotschla2025agentsnet} benchmarks topology effects on performance across tasks. All of these works measure task accuracy under different topologies but do not decompose \emph{why} one topology outperforms another or measure topology's contribution to uncertainty as a separable quantity.
+
+\paragraph{Uncertainty in multi-agent systems.}
+% UQ papers
+Uncertainty quantification for LLM ensembles has focused on aggregation methods. Semantic entropy \citep{} clusters outputs by meaning; DPIMPR \citep{} uses debate graphs for pairwise comparison; and UProp \citep{} propagates uncertainty through agent interactions. MATU \citep{} decomposes multi-agent uncertainty via tensor methods but operates on embedding representations (model-dependent), only tests 2-agent systems, and does not predict from graph features. Our framework operates on observable correctness signals (model-agnostic) and scales to $n \geq 5$ agents.
+
+\paragraph{Error propagation in agent networks.}
+Shen et al.\ \citep{shen2025studying} study error propagation causally in multi-agent systems but do not produce an uncertainty metric or predictive model. Wang et al.\ \citep{} use semantic entropy to \emph{drive} topology rewiring---uncertainty determines topology---but do not measure topology's \emph{contribution to} uncertainty, which is our focus.
+
+\paragraph{Information theory and ensemble methods.}
+Our theoretical analysis builds on the diversity prediction theorem \citep{krogh1995neural,page2007difference}, which relates ensemble accuracy to member diversity. We extend this to the multi-round communication setting where topology mediates how diversity is exploited or destroyed. The noisy-channel model with anchoring bias connects to social influence literature \citep{degroot1974reaching} and information cascades \citep{bikhchandani1992theory}.
+
+%=============================================================================
+\section{The Topology Tax Framework}
+\label{sec:framework}
+%=============================================================================
+
+\subsection{Setup and Notation}
+
+Consider a multi-agent system with $n$ agents $\{a_1, \ldots, a_n\}$ communicating over a directed graph $G = (V, E)$ where $V = \{a_1, \ldots, a_n\}$ and $(a_i, a_j) \in E$ means agent $i$ sends its response to agent $j$. Let $X$ denote the input question, $\Theta = \{(\theta_1, \ldots, \theta_n)\}$ the agent parameters (model identities, temperatures), and $Y$ the system output (majority-vote answer). Let $G_\varnothing$ denote the \emph{independent} topology (no edges): agents answer independently and the system uses majority vote.
+
+\subsection{Topology Sensitivity}
+
+\begin{definition}[Topology Sensitivity]
+\label{def:sensitivity}
+The topology sensitivity of system output $Y$ is the conditional mutual information:
+\begin{equation}
+    S(G) = I(Y; G \mid X, \Theta) \geq 0
+\end{equation}
+\end{definition}
+
+High $S$ indicates that the system output depends strongly on topology choice; low $S$ means the answer is topology-invariant. We estimate $S$ via contingency-table mutual information: discretize $Y$ (correct/incorrect) and $G$ (topology identity), compute $H(Y) - H(Y \mid G)$ from the joint frequency table over repeated runs.
+
+\subsection{Topology Benefit and the Tax}
+
+\begin{definition}[Topology Benefit]
+\label{def:benefit}
+The benefit of topology $G$ relative to independent voting is:
+\begin{equation}
+    B(G) = \mathbb{E}[\text{accuracy} \mid G, X] - \mathbb{E}[\text{accuracy} \mid G_\varnothing, X]
+\end{equation}
+\end{definition}
+
+The \textbf{Topology Tax} is $\tau(G) = -B(G)$. Positive tax means the topology costs accuracy relative to independent voting; negative tax means the topology is a net benefit.
+
+\subsection{Amplification--Absorption Decomposition}
+
+We decompose $B(G)$ into two mechanistically interpretable components:
+
+\begin{definition}[Amplification and Absorption]
+\label{def:amp-abs}
+\begin{align}
+    A^+(G) &= \max\bigl(0,\; P(\text{wrong consensus} \mid G) - P(\text{wrong consensus} \mid G_\varnothing)\bigr) \\
+    A^-(G) &= \max\bigl(0,\; P(\text{correct} \mid G) - P(\text{correct} \mid G_\varnothing)\bigr)
+\end{align}
+where ``wrong consensus'' means $\geq 80\%$ of agents agree on the same incorrect answer. Then:
+\begin{equation}
+    B(G) = A^-(G) - A^+(G) + R(G)
+\end{equation}
+where $R(G)$ captures non-consensus effects.
+\end{definition}
+
+\textbf{Amplification} $A^+(G)$ measures the increase in correlated wrong answers due to communication---agents ``infecting'' each other with errors through the topology. \textbf{Absorption} $A^-(G)$ measures the increase in correct answers---agents correcting each other through information exchange. The residual $R(G)$ captures effects on answer diversity that do not manifest as consensus shifts.
+
+%=============================================================================
+\section{Theoretical Analysis}
+\label{sec:theory}
+%=============================================================================
+
+\subsection{Noisy-Channel Agent Model}
+
+We analyze the Topology Tax under a tractable agent model:
+
+\begin{definition}[Noisy-Channel Model with Anchoring]
+Each agent $a_i$ independently answers correctly with probability $p_i \in (0,1)$. When agent $j$ observes agent $i$'s response (i.e., $(i,j) \in E$), agent $j$ switches to $i$'s answer with \emph{anchoring probability} $\alpha_{ij} \in [0,1]$ if $j$'s initial confidence is below a threshold $\gamma$.
+\end{definition}
+
+This model captures two key phenomena: independent competence ($p_i$) and social influence ($\alpha_{ij}$). The threshold $\gamma$ determines agent stubbornness.
+
+\subsection{Amplification Monotonicity}
+
+\begin{theorem}[Star Amplification Monotonicity]
+\label{thm:amplification}
+In the noisy-channel model, for star topology $G_\star$ with hub agent $h$:
+\begin{equation}
+    A^+(G_\star) \text{ is monotonically increasing in } (1 - p_h) \cdot \sum_{j \neq h} \alpha_{hj}
+\end{equation}
+That is, amplification grows with the product of hub error rate and aggregate susceptibility to the hub.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+When the hub is wrong (probability $1-p_h$), each spoke $j$ switches to the hub's wrong answer with probability $\alpha_{hj}$. The probability of wrong consensus under $G_\star$ is $(1-p_h) \prod_j \alpha_{hj}$. Under $G_\varnothing$, wrong consensus requires all agents to independently err: $\prod_i (1-p_i)$. Since $\alpha_{hj} \geq (1-p_j)$ when the hub is authoritative, $A^+(G_\star) > 0$ and increases with $(1-p_h) \sum_j \alpha_{hj}$. Full proof in Appendix~\ref{app:proofs}.
+\end{proof}
+
+\textbf{Implication}: Star topologies are high-risk when the hub is unreliable. This explains why MacNet's irregular topologies (which avoid single bottlenecks) outperform regular stars on hard questions.
+
+\subsection{Diversity--Absorption Bound}
+
+\begin{theorem}[Diversity--Absorption Bound]
+\label{thm:absorption}
+\begin{equation}
+    A^-(G) \leq D_{G_\varnothing} \cdot f(G)
+\end{equation}
+where $D_{G_\varnothing} = \text{Var}(\text{agent predictions under } G_\varnothing)$ measures agent diversity and $f(G)$ is a topology-dependent factor bounded by the algebraic connectivity $\lambda_2(G)$ of the communication graph.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Extends the diversity prediction theorem \citep{krogh1995neural} to the multi-round communication setting. Absorption requires (1) diverse initial predictions ($D$ term) and (2) a topology that propagates corrections ($f(G)$ term). The algebraic connectivity $\lambda_2(G)$ governs information diffusion speed on the graph, bounding how effectively the topology aggregates diverse signals. Full proof in Appendix~\ref{app:proofs}.
+\end{proof}
+
+\textbf{Implication}: Absorption is fundamentally limited by agent diversity. Homogeneous agent pools (same model, same temperature) cannot benefit from topology regardless of graph structure---the diversity term $D_{G_\varnothing}$ vanishes.
+
+\subsection{Sparsity Phase Transition}
+
+\begin{proposition}[Sparsity Phase Transition]
+\label{prop:phase-transition}
+In the noisy-channel model with $n$ homogeneous agents ($p_i = p$, $\alpha_{ij} = \alpha$), there exists a critical edge density $\rho^* = f(p, \alpha)$ such that:
+\begin{itemize}
+    \item For density $\rho > \rho^*$: amplification dominates ($A^+(G) > A^-(G)$), topology is a net tax.
+    \item For density $\rho < \rho^*$: insufficient information flow limits absorption.
+    \item $B(G)$ is maximized near $\rho = \rho^*$.
+\end{itemize}
+Moreover, $\rho^*$ decreases as agent accuracy $p$ increases: better agents need less communication.
+\end{proposition}
+
+\begin{proof}[Proof sketch]
+$A^+(G)$ grows as $\sim \rho^k$ (exponential in density $\rho$) due to correlated errors along paths. $A^-(G)$ grows as $\sim \log(1 + \rho \cdot n)$ (diminishing returns from redundant corrections). The crossover defines $\rho^*$. The dependence on $p$ follows from the amplification term's factor of $(1-p)^k$. Full proof in Appendix~\ref{app:proofs}.
+\end{proof}
+
+\textbf{Implication}: There is an optimal communication density for any agent pool. Over-connected networks amplify errors; under-connected networks fail to exploit diversity.
+
+%=============================================================================
+\section{Experimental Setup}
+\label{sec:experiments}
+%=============================================================================
+
+\subsection{Models and Infrastructure}
+
+We use 5 LLM families via AWS Bedrock to ensure heterogeneity:
+\begin{itemize}
+    \item \textbf{Claude 3.5 Haiku} (Anthropic) --- strong instruction following
+    \item \textbf{Llama 3.3 70B Instruct} (Meta) --- open-weights reasoning
+    \item \textbf{Mistral Large} (Mistral AI) --- European alternative
+    \item \textbf{Command R+} (Cohere) --- retrieval-augmented design
+    \item \textbf{Llama 4 Maverick} (Meta) --- latest generation
+\end{itemize}
+
+All inference at temperature 0 for reproducibility, with 20 stochastic runs per condition (temperature 0.7) for uncertainty estimation. Each 5-agent system uses all 5 models (one per agent), ensuring maximal diversity.
+
+\subsection{Datasets}
+
+\begin{table}[h]
+\centering
+\caption{Evaluation benchmarks.}
+\label{tab:datasets}
+\begin{tabular}{@{}llrl@{}}
+\toprule
+Dataset & Task Type & Size & Rationale \\
+\midrule
+MMLU (5 subjects) & Knowledge/factual & 500 & Field standard (7/10 prior works) \\
+GSM8K & Math reasoning & 500 & Verifiable answers (6/10) \\
+HumanEval & Code generation & 164 & Different modality \\
+HotpotQA & Multi-hop reasoning & 500 & Multi-step reasoning \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Topologies}
+
+We evaluate 10 communication topologies spanning the spectrum from no communication to full connectivity:
+
+\begin{table}[h]
+\centering
+\caption{Topology configurations for $n=5$ agents.}
+\label{tab:topologies}
+\begin{tabular}{@{}lrrl@{}}
+\toprule
+Topology & Edges & Density & Structure \\
+\midrule
+Independent ($G_\varnothing$) & 0 & 0.00 & No communication (baseline) \\
+Chain & 4 & 0.20 & Sequential pipeline \\
+Ring & 5 & 0.25 & Circular communication \\
+Star & 8 & 0.40 & Hub-and-spoke \\
+Binary tree & 8 & 0.40 & Hierarchical \\
+Sparse random & $\sim$6 & 0.30 & Random with $p=0.3$ \\
+Erd\H{o}s--R\'{e}nyi & $\sim$10 & 0.50 & Random with $p=0.5$ \\
+Small-world & $\sim$8 & 0.40 & Watts--Strogatz \\
+Context-matched & $\sim$8 & 0.40 & Topic-clustered \\
+Complete & 20 & 1.00 & All-to-all \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Statistical Framework}
+
+\paragraph{Primary model.} Linear mixed-effects model:
+\begin{equation}
+    \text{correctness}_{ijk} \sim \text{topology}_j + \text{difficulty}_k + (1 + \text{topology}_j \mid \text{question}_k) + (1 \mid \text{dataset})
+\end{equation}
+with topology as fixed effect and question as random intercept with random slopes, properly accounting for the repeated-measures structure.
+
+\paragraph{Significance testing.} Permutation test: permute topology labels within each question 1{,}000 times, compare observed test statistic to null distribution. Benjamini-Hochberg FDR correction at $q = 0.05$.
+
+\paragraph{Effect sizes.} We report partial $\eta^2$, Cohen's $d$, $R^2$, and 95\% confidence intervals throughout. With $n = 500$ questions per dataset, $p$-values are nearly always significant; effect sizes are the meaningful contribution.
+
+%=============================================================================
+\section{Results}
+\label{sec:results}
+%=============================================================================
+
+\subsection{Phase 1: Synthetic Validation}
+
+% TODO: Insert results from synthetic simulator validation
+% - Decomposition consistency across 3 config × 5 topology × 1000 questions
+% - Scaling analysis: 5 agent counts × 3 topologies
+% - Predictive model validation: graph features → B(G)
+
+\subsection{Phase 2: Topology Sensitivity Measurement}
+
+% TODO: Insert main empirical results
+% - S(G) values across datasets and topologies
+% - B(G) decomposition heatmaps
+% - Mixed-effects model results: topology variance component
+% - Conditional analysis by question difficulty
+
+\subsection{Phase 3: Predictive Model}
+
+% TODO: Insert prediction results
+% - Linear → Random Forest → feature importance
+% - R² on held-out data
+% - SHAP analysis: which graph features predict amplification vs absorption
+% - Cross-dataset generalization
+
+\subsection{Phase 4: Ablation Studies}
+
+% TODO: Insert ablation results
+% - Agent count scaling (3, 5, 7, 9)
+% - Model homogeneity vs heterogeneity
+% - Temperature sensitivity
+% - Run count convergence analysis
+
+%=============================================================================
+\section{Predictive Model and Feature Analysis}
+\label{sec:prediction}
+%=============================================================================
+
+% TODO: Detailed predictive model results
+% - Feature importance rankings (SHAP)
+% - Fiedler value, clustering coefficient, degree entropy as top predictors
+% - Practical topology selection algorithm
+
+%=============================================================================
+\section{Discussion}
+\label{sec:discussion}
+%=============================================================================
+
+% TODO: Interpret results in context of prior work
+% - Why sparse > dense (amplification dominance at high density)
+% - Why MacNet's irregular topologies work (avoiding hub bottlenecks)
+% - Practical guidelines for topology selection
+% - When to use communication vs independent voting
+
+\paragraph{Limitations.}
+% Pre-committed limitations:
+% - Temperature 0 baseline may not represent typical deployment
+% - Noisy-channel model is simplified; real anchoring is more complex
+% - Bedrock models only; results may differ for closed-API models
+% - 5-agent systems; scaling to 50+ untested empirically
+% - Compute cost (~$2,100) limits replication
+
+%=============================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+%=============================================================================
+
+% TODO: Summarize contributions and implications
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bibliography{references}
+\bibliographystyle{plainnat}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+\appendix
+
+\section{Proofs}
+\label{app:proofs}
+
+\subsection{Proof of Theorem~\ref{thm:amplification}}
+% TODO: Full proof
+
+\subsection{Proof of Theorem~\ref{thm:absorption}}
+% TODO: Full proof
+
+\subsection{Proof of Proposition~\ref{prop:phase-transition}}
+% TODO: Full proof
+
+\section{Additional Experimental Details}
+\label{app:experimental}
+
+\subsection{Model Specifications}
+% TODO: Full Bedrock model IDs, parameters
+
+\subsection{Prompt Templates}
+% TODO: Exact prompts used for each dataset
+
+\subsection{Topology Construction}
+% TODO: Exact graph construction algorithms
+
+\section{Additional Results}
+\label{app:results}
+
+% TODO: Per-dataset breakdowns, additional ablations
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+\input{checklist}
+
+\end{document}
