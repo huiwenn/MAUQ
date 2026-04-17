@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
 Phase 2a: LLM Topology Pilot.
-100 MMLU questions × 3 topologies (independent, star, complete) × 20 runs.
+100 MMLU questions × 10 topologies × 20 runs.
 Each run uses 5 heterogeneous agents (one per model).
 
 Usage:
-  uv run python scripts/run_phase2a_pilot.py --topology independent
-  uv run python scripts/run_phase2a_pilot.py --topology star
-  uv run python scripts/run_phase2a_pilot.py --topology complete
+  uv run python scripts/run_phase2a_pilot.py --topology ring
+  uv run python scripts/run_phase2a_pilot.py --topology all   # run all incomplete
   uv run python scripts/run_phase2a_pilot.py --merge
 """
 import argparse
@@ -21,7 +20,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from topology_tax.config import CORE_MODELS, RESULTS_DIR
+from topology_tax.config import CORE_MODELS, RESULTS_DIR, TOPOLOGY_NAMES
 from topology_tax.bedrock_client import BedrockAgent
 from topology_tax.datasets import load_questions, extract_answer
 from topology_tax.topologies import build_topology
@@ -31,7 +30,7 @@ from topology_tax.storage import ResultStore
 N_QUESTIONS = 100
 N_RUNS = 20
 N_ROUNDS = 2
-PILOT_TOPOLOGIES = ["independent", "star", "complete"]
+ALL_TOPOLOGIES = TOPOLOGY_NAMES
 
 
 def make_agents():
@@ -154,7 +153,7 @@ def run_single_topology(topo_name, output_dir):
 
 def merge_results(output_dir):
     merged = {}
-    for topo in PILOT_TOPOLOGIES:
+    for topo in ALL_TOPOLOGIES:
         f = output_dir / f"phase2a_{topo}.json"
         if f.exists():
             data = json.loads(f.read_text())
@@ -193,14 +192,24 @@ def main():
 
     if args.merge:
         merge_results(output_dir)
+    elif args.topology == "all":
+        for topo in ALL_TOPOLOGIES:
+            results_file = output_dir / f"phase2a_{topo}.json"
+            if results_file.exists():
+                data = json.loads(results_file.read_text())
+                if data.get("n_runs_completed", 0) >= N_RUNS:
+                    print(f"  Skipping {topo} — already complete ({data['n_runs_completed']} runs)")
+                    continue
+            print(f"\n=== Running topology: {topo} ===")
+            run_single_topology(topo, output_dir)
     elif args.topology:
-        if args.topology not in PILOT_TOPOLOGIES:
-            print(f"Unknown topology: {args.topology}. Choose from: {PILOT_TOPOLOGIES}")
+        if args.topology not in ALL_TOPOLOGIES:
+            print(f"Unknown topology: {args.topology}. Choose from: {ALL_TOPOLOGIES}")
             sys.exit(1)
         run_single_topology(args.topology, output_dir)
     else:
         parser.print_help()
-        print(f"\nAvailable topologies: {PILOT_TOPOLOGIES}")
+        print(f"\nAvailable topologies: {ALL_TOPOLOGIES}")
 
 
 if __name__ == "__main__":
