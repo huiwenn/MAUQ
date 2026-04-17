@@ -1,0 +1,265 @@
+{
+  "decomposition_validation": [
+    {
+      "config": "bad_hub_star",
+      "topology": "complete",
+      "accuracy": 0.30495,
+      "independent_accuracy": 0.9656,
+      "benefit": -0.6606500000000001,
+      "amplification": 0.67925,
+      "absorption": 0.0
+    },
+    {
+      "config": "bad_hub_star",
+      "topology": "star",
+      "accuracy": 0.3011,
+      "independent_accuracy": 0.96715,
+      "benefit": -0.6660499999999999,
+      "amplification": 0.6699,
+      "absorption": 0.0
+    },
+    {
+      "config": "bad_hub_star",
+      "topology": "ring",
+      "accuracy": 0.7639,
+      "independent_accuracy": 0.96815,
+      "benefit": -0.20425,
+      "amplification": 0.19925,
+      "absorption": 0.07276999999999997
+    },
+    {
+      "config": "bad_hub_star",
+      "topology": "chain",
+      "accuracy": 0.3982,
+      "independent_accuracy": 0.96835,
+      "benefit": -0.5701499999999999,
+      "amplification": 0.52975,
+      "absorption": 4.9999999999999935e-05
+    },
+    {
+      "config": "bad_hub_star",
+      "topology": "independent",
+      "accuracy": 0.9681,
+      "independent_accuracy": 0.9681,
+      "benefit": 0.0,
+      "amplification": 0.0,
+      "absorption": 0.0
+    },
+    {
+      "config": "good_diverse",
+      "topology": "complete",
+      "accuracy": 0.8068,
+      "independent_accuracy": 0.95505,
+      "benefit": -0.14825,
+      "amplification": 0.0587,
+      "absorption": 0.012699999999999998
+    },
+    {
+      "config": "good_diverse",
+      "topology": "star",
+      "accuracy": 0.88175,
+      "independent_accuracy": 0.9563,
+      "benefit": -0.07454999999999998,
+      "amplification": 0.0205,
+      "absorption": 0.010870000000000005
+    },
+    {
+      "config": "good_diverse",
+      "topology": "ring",
+      "accuracy": 0.88715,
+      "independent_accuracy": 0.9574,
+      "benefit": -0.07025,
+      "amplification": 0.01725,
+      "absorption": 0.013149999999999998
+    },
+    {
+      "config": "good_diverse",
+      "topology": "chain",
+      "accuracy": 0.89725,
+      "independent_accuracy": 0.95505,
+      "benefit": -0.0578,
+      "amplification": 0.015399999999999999,
+      "absorption": 0.010810000000000002
+    },
+    {
+      "config": "good_diverse",
+      "topology": "independent",
+      "accuracy": 0.95705,
+      "independent_accuracy": 0.95705,
+      "benefit": 0.0,
+      "amplification": 0.0,
+      "absorption": 0.0
+    },
+    {
+      "config": "homogeneous_weak",
+      "topology": "complete",
+      "accuracy": 0.51825,
+      "independent_accuracy": 0.78105,
+      "benefit": -0.26280000000000003,
+      "amplification": 0.31884999999999997,
+      "absorption": 0.03103999999999999
+    },
+    {
+      "config": "homogeneous_weak",
+      "topology": "star",
+      "accuracy": 0.5675,
+      "independent_accuracy": 0.7773,
+      "benefit": -0.20980000000000001,
+      "amplification": 0.20870000000000002,
+      "absorption": 0.025790000000000004
+    },
+    {
+      "config": "homogeneous_weak",
+      "topology": "ring",
+      "accuracy": 0.57615,
+      "independent_accuracy": 0.7786,
+      "benefit": -0.20245,
+      "amplification": 0.16344999999999998,
+      "absorption": 0.024350000000000004
+    },
+    {
+      "config": "homogeneous_weak",
+      "topology": "chain",
+      "accuracy": 0.59495,
+      "independent_accuracy": 0.779,
+      "benefit": -0.18405000000000002,
+      "amplification": 0.146,
+      "absorption": 0.02278
+    },
+    {
+      "config": "homogeneous_weak",
+      "topology": "independent",
+      "accuracy": 0.78105,
+      "independent_accuracy": 0.78105,
+      "benefit": 0.0,
+      "amplification": 0.0,
+      "absorption": 0.0
+    }
+  ],
+  "scaling_analysis": [
+    {
+      "n_agents": 3,
+      "topology": "complete",
+      "accuracy": 0.7326,
+      "benefit": -0.14459999999999998,
+      "amplification": 0.07060000000000001,
+      "absorption": 0.019400000000000014
+    },
+    {
+      "n_agents": 3,
+      "topology": "ring",
+      "accuracy": 0.7267,
+      "benefit": -0.15180000000000002,
+      "amplification": 0.0694,
+      "absorption": 0.018766666666666675
+    },
+    {
+      "n_agents": 3,
+      "topology": "independent",
+      "accuracy": 0.8739,
+      "benefit": 0.0,
+      "amplification": 0.0,
+      "absorption": 0.0
+    },
+    {
+      "n_agents": 5,
+      "topology": "complete",
+      "accuracy": 0.7296,
+      "benefit": -0.1985,
+      "amplification": 0.1166,
+      "absorption": 0.023059999999999994
+    },
+    {
+      "n_agents": 5,
+      "topology": "ring",
+      "accuracy": 0.7984,
+      "benefit": -0.12459999999999997,
+      "amplification": 0.047200000000000006,
+      "absorption": 0.015000000000000003
+    },
+    {
+      "n_agents": 5,
+      "topology": "independent",
+      "accuracy": 0.9255,
+      "benefit": 0.0,
+      "amplification": 0.0,
+      "absorption": 0.0
+    },
+    {
+      "n_agents": 10,
+      "topology": "complete",
+      "accuracy": 0.7215,
+      "benefit": -0.25830000000000003,
+      "amplification": 0.1019,
+      "absorption": 0.02490000000000002
+    },
+    {
+      "n_agents": 10,
+      "topology": "ring",
+      "accuracy": 0.9079,
+      "benefit": -0.0729,
+      "amplification": 0.0018000000000000002,
+      "absorption": 0.012290000000000016
+    },
+    {
+      "n_agents": 10,
+      "topology": "independent",
+      "accuracy": 0.9799,
+      "benefit": 0.0,
+      "amplification": 0.0,
+      "absorption": 0.0
+    },
+    {
+      "n_agents": 20,
+      "topology": "complete",
+      "accuracy": 0.7043,
+      "benefit": -0.2936999999999999,
+      "amplification": 0.09670000000000001,
+      "absorption": 0.023264999999999997
+    },
+    {
+      "n_agents": 20,
+      "topology": "ring",
+      "accuracy": 0.9728,
+      "benefit": -0.026200000000000015,
+      "amplification": 0.0,
+      "absorption": 0.008094999999999998
+    },
+    {
+      "n_agents": 20,
+      "topology": "independent",
+      "accuracy": 0.9982,
+      "benefit": 0.0,
+      "amplification": 0.0,
+      "absorption": 0.0
+    },
+    {
+      "n_agents": 50,
+      "topology": "complete",
+      "accuracy": 0.6964,
+      "benefit": -0.30360000000000004,
+      "amplification": 0.0901,
+      "absorption": 0.02655600000000001
+    },
+    {
+      "n_agents": 50,
+      "topology": "ring",
+      "accuracy": 0.9996,
+      "benefit": -0.00040000000000000034,
+      "amplification": 0.0,
+      "absorption": 0.006008000000000009
+    },
+    {
+      "n_agents": 50,
+      "topology": "independent",
+      "accuracy": 1.0,
+      "benefit": 0.0,
+      "amplification": 0.0,
+      "absorption": 0.0
+    }
+  ],
+  "predictive_model": {
+    "linear_r2": 0.9921445448609623,
+    "rf_r2": 0.9195659465897928
+  }
+}
