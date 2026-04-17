@@ -32,19 +32,21 @@ except ImportError:
     HAS_ALL_MODULES = False
 
 try:
-    from topology_tax.analysis import analyze_results
+    from topology_tax.analysis import permutation_test_topology_effect, compute_partial_eta_squared
     HAS_ANALYSIS = True
 except ImportError:
     HAS_ANALYSIS = False
 
 # --- Bedrock credential check ---
-try:
-    import boto3
-    client = boto3.client("bedrock-runtime", region_name="us-east-1")
-    client.meta.service_model
-    HAS_BEDROCK = True
-except Exception:
-    HAS_BEDROCK = False
+import os
+HAS_BEDROCK = bool(os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION"))
+if HAS_BEDROCK:
+    try:
+        import boto3
+        client = boto3.client("bedrock-runtime")
+        client.meta.service_model
+    except Exception:
+        HAS_BEDROCK = False
 
 
 # ── Test 1: End-to-end smoke (real Bedrock) ────────────────────────────
@@ -278,15 +280,13 @@ class TestSimulatorToAnalysisPipeline:
         np.fill_diagonal(anchoring, 0.0)
         sim = NoisyChannelSimulator(n_agents, accuracies, anchoring, seed=42)
 
-        results_for_analysis = []
+        correctness_by_topology = {}
         for topo_name in ["independent", "star", "complete", "ring"]:
             G = build_topology(topo_name, n_agents=n_agents)
             result = sim.run(G, n_questions=100, n_runs=10)
-            results_for_analysis.append({
-                "topology": topo_name,
-                **result,
-            })
+            correctness_by_topology[topo_name] = np.array(result["per_question_correct"], dtype=float)
 
-        # Pass to analysis module
-        analysis_output = analyze_results(results_for_analysis)
-        assert analysis_output is not None
+        stat, p_value = permutation_test_topology_effect(correctness_by_topology, n_permutations=200, seed=42)
+        assert stat >= 0
+        eta_sq = compute_partial_eta_squared(correctness_by_topology)
+        assert 0.0 <= eta_sq <= 1.0
