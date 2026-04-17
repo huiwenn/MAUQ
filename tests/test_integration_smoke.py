@@ -39,11 +39,12 @@ except ImportError:
 
 # --- Bedrock credential check ---
 import os
-HAS_BEDROCK = bool(os.environ.get("AWS_REGION") or os.environ.get("AWS_DEFAULT_REGION"))
+_bedrock_region = os.environ.get("AWS_DEFAULT_REGION") or os.environ.get("AWS_REGION")
+HAS_BEDROCK = bool(_bedrock_region)
 if HAS_BEDROCK:
     try:
         import boto3
-        client = boto3.client("bedrock-runtime")
+        client = boto3.client("bedrock-runtime", region_name=_bedrock_region)
         client.meta.service_model
     except Exception:
         HAS_BEDROCK = False
@@ -58,7 +59,8 @@ class TestEndToEndSmoke:
 
     def test_single_question_independent_topology(self):
         """Run a single MMLU-style question through 1 agent on 'independent' topology."""
-        model_id = "anthropic.claude-3-5-haiku-20241022-v1:0"
+        from topology_tax.config import CORE_MODELS
+        model_id = CORE_MODELS["claude-haiku"]
 
         agents = [BedrockAgent(agent_id="agent_0", model_id=model_id)]
 

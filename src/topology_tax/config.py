@@ -4,21 +4,20 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 RESULTS_DIR = PROJECT_ROOT / "results"
 
-BEDROCK_REGION = "us-east-1"
+BEDROCK_REGION = "us-west-2"
 
 CORE_MODELS = {
-    "claude-haiku": "anthropic.claude-3-5-haiku-20241022-v1:0",
-    "llama-70b": "meta.llama3-3-70b-instruct-v1:0",
-    "mistral-large": "mistral.mistral-large-2402-v1:0",
-    "command-r-plus": "cohere.command-r-plus-v1:0",
-    "llama4-maverick": "meta.llama4-maverick-17b-instruct-v1:0",
+    "claude-haiku": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+    "llama-70b": "us.meta.llama3-3-70b-instruct-v1:0",
+    "mistral-large": "us.mistral.pixtral-large-2502-v1:0",
+    "llama4-maverick": "us.meta.llama4-maverick-17b-instruct-v1:0",
+    "llama4-scout": "us.meta.llama4-scout-17b-instruct-v1:0",
 }
 
 EXTENDED_MODELS = {
-    "claude-sonnet": "anthropic.claude-3-7-sonnet-20250219-v1:0",
-    "ministral-8b": "mistral.ministral-3-8b-instruct",
-    "jamba-large": "ai21.jamba-1-5-large-v1:0",
-    "llama-3b": "meta.llama3-2-3b-instruct-v1:0",
+    "claude-haiku-3": "us.anthropic.claude-3-haiku-20240307-v1:0",
+    "llama-3.1-70b": "us.meta.llama3-1-70b-instruct-v1:0",
+    "llama-3b": "us.meta.llama3-2-3b-instruct-v1:0",
 }
 
 TOPOLOGY_NAMES = [

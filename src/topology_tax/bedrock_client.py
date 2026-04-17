@@ -25,8 +25,10 @@ class BedrockAgent:
         self.temperature = temperature
         self.max_tokens = max_tokens
         if client is None:
+            import os
             import boto3
-            self.client = boto3.client("bedrock-runtime")
+            region = os.environ.get("AWS_DEFAULT_REGION") or os.environ.get("AWS_REGION") or "us-west-2"
+            self.client = boto3.client("bedrock-runtime", region_name=region)
         else:
             self.client = client
 

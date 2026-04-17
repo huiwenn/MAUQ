@@ -15,8 +15,11 @@ def normalize_answer(answer: str) -> str:
 def extract_answer(text: str, task_type: str = "mcq") -> str:
     if task_type == "mcq":
         match = re.search(
-            r"(?:the answer is|answer:|)\s*\(?([A-D])\)?", text, re.IGNORECASE
+            r"(?:the answer is|answer:)\s*\**\(?([A-D])\)?\**", text, re.IGNORECASE
         )
+        if match:
+            return match.group(1).upper()
+        match = re.search(r"\(([A-D])\)", text)
         if match:
             return match.group(1).upper()
         match = re.search(r"\b([A-D])\b", text)
