@@ -1,0 +1,191 @@
+{
+  "benefits": {
+    "chain": {
+      "benefit": 0.007777777777777883,
+      "tax": -0.007777777777777883,
+      "accuracy": 0.9344444444444444,
+      "baseline": 0.9266666666666665,
+      "n_questions": 100
+    },
+    "ring": {
+      "benefit": 0.009722222222222299,
+      "tax": -0.009722222222222299,
+      "accuracy": 0.9363888888888888,
+      "baseline": 0.9266666666666665,
+      "n_questions": 100
+    },
+    "sparse_random": {
+      "benefit": -0.00402777777777763,
+      "tax": 0.00402777777777763,
+      "accuracy": 0.9226388888888889,
+      "baseline": 0.9266666666666665,
+      "n_questions": 100
+    },
+    "binary_tree": {
+      "benefit": -0.0033333333333331883,
+      "tax": 0.0033333333333331883,
+      "accuracy": 0.9233333333333333,
+      "baseline": 0.9266666666666665,
+      "n_questions": 100
+    },
+    "context_matched": {
+      "benefit": -0.008333333333333082,
+      "tax": 0.008333333333333082,
+      "accuracy": 0.9183333333333334,
+      "baseline": 0.9266666666666665,
+      "n_questions": 100
+    },
+    "small_world": {
+      "benefit": -0.0016666666666664831,
+      "tax": 0.0016666666666664831,
+      "accuracy": 0.925,
+      "baseline": 0.9266666666666665,
+      "n_questions": 100
+    },
+    "erdos_renyi": {
+      "benefit": 0.0002777777777779322,
+      "tax": -0.0002777777777779322,
+      "accuracy": 0.9269444444444445,
+      "baseline": 0.9266666666666665,
+      "n_questions": 100
+    },
+    "star": {
+      "benefit": -0.0066666666666664876,
+      "tax": 0.0066666666666664876,
+      "accuracy": 0.92,
+      "baseline": 0.9266666666666665,
+      "n_questions": 100
+    },
+    "complete": {
+      "benefit": -0.004999999999999782,
+      "tax": 0.004999999999999782,
+      "accuracy": 0.9216666666666667,
+      "baseline": 0.9266666666666665,
+      "n_questions": 100
+    }
+  },
+  "decompositions": {
+    "chain": {
+      "benefit": 0.007777777777777777,
+      "amplification": 0.011666666666666667,
+      "absorption": 0.03770135746606336,
+      "n_questions": 100
+    },
+    "ring": {
+      "benefit": 0.00972222222222222,
+      "amplification": 0.008333333333333333,
+      "absorption": 0.03866503267973856,
+      "n_questions": 100
+    },
+    "sparse_random": {
+      "benefit": -0.004027777777777778,
+      "amplification": 0.005972222222222223,
+      "absorption": 0.02539751640477443,
+      "n_questions": 100
+    },
+    "binary_tree": {
+      "benefit": -0.003333333333333335,
+      "amplification": 0.019444444444444445,
+      "absorption": 0.037359477124183006,
+      "n_questions": 100
+    },
+    "context_matched": {
+      "benefit": -0.008333333333333333,
+      "amplification": 0.01115079365079365,
+      "absorption": 0.019763452528158417,
+      "n_questions": 100
+    },
+    "small_world": {
+      "benefit": -0.0016666666666666653,
+      "amplification": 0.009833333333333335,
+      "absorption": 0.03720392156862745,
+      "n_questions": 100
+    },
+    "erdos_renyi": {
+      "benefit": 0.0002777777777777768,
+      "amplification": 0.007222222222222224,
+      "absorption": 0.03311928104575164,
+      "n_questions": 100
+    },
+    "star": {
+      "benefit": -0.006666666666666667,
+      "amplification": 0.026666666666666665,
+      "absorption": 0.047470588235294126,
+      "n_questions": 100
+    },
+    "complete": {
+      "benefit": -0.005,
+      "amplification": 0.02,
+      "absorption": 0.038470588235294124,
+      "n_questions": 100
+    }
+  },
+  "sensitivity": 0.0004296666820147177,
+  "statistics": {
+    "omnibus_f": 0.25944959401247214,
+    "omnibus_p": 0.9460539460539461,
+    "partial_eta_squared": 0.0005874219067527471,
+    "pairwise": {
+      "chain": {
+        "p": 0.46053946053946054,
+        "significant": false
+      },
+      "ring": {
+        "p": 0.45554445554445555,
+        "significant": false
+      },
+      "sparse_random": {
+        "p": 1.0,
+        "significant": false
+      },
+      "binary_tree": {
+        "p": 1.0,
+        "significant": false
+      },
+      "context_matched": {
+        "p": 1.0,
+        "significant": false
+      },
+      "small_world": {
+        "p": 1.0,
+        "significant": false
+      },
+      "erdos_renyi": {
+        "p": 0.8871128871128872,
+        "significant": false
+      },
+      "star": {
+        "p": 0.8811188811188811,
+        "significant": false
+      },
+      "complete": {
+        "p": 1.0,
+        "significant": false
+      }
+    }
+  },
+  "difficulty_conditioned": {
+    "easy": {
+      "n_questions": 91,
+      "partial_eta_squared": 0.0029208246009707057
+    },
+    "hard": {
+      "n_questions": 9,
+      "partial_eta_squared": 0.009291379924378024
+    }
+  },
+  "predictive_model": {
+    "linear_r2": 0.5813837730214051,
+    "rf_r2": 0.4551789164039616,
+    "rf_importance": {
+      "edge_density": 0.07837273285226518,
+      "diameter": 0.07294607018242732,
+      "clustering_coefficient": 0.07404075623359596,
+      "algebraic_connectivity": 0.07138184973823003,
+      "spectral_gap": 0.35499841010825783,
+      "avg_path_length": 0.09008882203774499,
+      "degree_entropy": 0.15900522911336987,
+      "max_betweenness": 0.09916612973410892
+    }
+  }
+}
