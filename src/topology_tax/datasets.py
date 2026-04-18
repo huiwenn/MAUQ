@@ -5,11 +5,63 @@ from typing import Optional
 
 def normalize_answer(answer: str) -> str:
     text = answer.strip().lower()
-    # Strip common answer prefixes
     text = re.sub(
         r"^(?:the answer is|answer is|answer:)\s*", "", text, flags=re.IGNORECASE
     )
     return text.strip()
+
+
+def normalize_math_answer(answer: str) -> str:
+    """Normalize a LaTeX math answer for comparison."""
+    s = answer.strip()
+    s = s.replace("\\left", "").replace("\\right", "")
+    s = s.replace("\\!", "").replace("\\ ", "").replace("\\,", "")
+    s = s.replace("\\text{", "").replace("}", "")
+    s = s.replace("$", "").replace("\\[", "").replace("\\]", "")
+    s = s.replace("\\boxed{", "").rstrip("}")
+    s = re.sub(r"\s+", "", s)
+    return s
+
+
+def math_answers_equal(pred: str, gold: str) -> bool:
+    """Compare two math answers with normalization."""
+    p = normalize_math_answer(pred)
+    g = normalize_math_answer(gold)
+    if p == g:
+        return True
+    # Try numeric comparison
+    try:
+        pv = float(p.replace(",", ""))
+        gv = float(g.replace(",", ""))
+        return abs(pv - gv) < 1e-6
+    except (ValueError, OverflowError):
+        pass
+    # Try sympy as last resort
+    try:
+        from sympy.parsing.latex import parse_latex
+        pe = parse_latex(pred.strip())
+        ge = parse_latex(gold.strip())
+        return pe.equals(ge)
+    except Exception:
+        pass
+    return False
+
+
+def _extract_boxed(text: str) -> Optional[str]:
+    """Extract content from \\boxed{...}, handling nested braces."""
+    idx = text.rfind("\\boxed{")
+    if idx == -1:
+        return None
+    start = idx + len("\\boxed{")
+    depth = 1
+    for i in range(start, len(text)):
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:i].strip()
+    return None
 
 
 def extract_answer(text: str, task_type: str = "mcq") -> str:
@@ -27,10 +79,18 @@ def extract_answer(text: str, task_type: str = "mcq") -> str:
             return match.group(1).upper()
         return text.strip()
     elif task_type == "numeric":
-        match = re.search(r"####\s*([\d,.\-]+)", text)
+        boxed = _extract_boxed(text)
+        if boxed is not None:
+            return boxed
+        match = re.search(
+            r"(?:the answer is|answer is|answer:)\s*(.+?)(?:\.|$)",
+            text, re.IGNORECASE,
+        )
         if match:
-            return match.group(1).replace(",", "")
-        match = re.search(r"(?:answer is|=)\s*([\d,.\-]+)", text, re.IGNORECASE)
+            ans = match.group(1).strip()
+            if ans:
+                return ans
+        match = re.search(r"####\s*([\d,.\-]+)", text)
         if match:
             return match.group(1).replace(",", "")
         numbers = re.findall(r"[\d,]+\.?\d*", text)
@@ -60,6 +120,7 @@ def load_questions(
         "gsm8k": _load_gsm8k,
         "humaneval": _load_humaneval,
         "hotpotqa": _load_hotpotqa,
+        "math500": _load_math500,
     }
     if dataset not in loaders:
         raise ValueError(f"Unknown dataset: {dataset}. Choose from {list(loaders)}")
@@ -79,7 +140,7 @@ def _load_mmlu(n=None, seed=42):
     ]
     questions = []
     for subj in subjects:
-        ds = load_dataset("cais/mmlu", subj, split="test", trust_remote_code=True)
+        ds = load_dataset("cais/mmlu", subj, split="test")
         for i, row in enumerate(ds):
             choices = row["choices"]
             choice_str = "\n".join(
@@ -124,8 +185,7 @@ def _load_humaneval(n=None, seed=42):
     import random
 
     ds = load_dataset(
-        "openai/openai_humaneval", split="test", trust_remote_code=True
-    )
+        "openai/openai_humaneval", split="test"    )
     questions = []
     for i, row in enumerate(ds):
         questions.append(
@@ -147,8 +207,7 @@ def _load_hotpotqa(n=None, seed=42):
     import random
 
     ds = load_dataset(
-        "hotpot_qa", "fullwiki", split="validation", trust_remote_code=True
-    )
+        "hotpot_qa", "fullwiki", split="validation"    )
     questions = []
     for i, row in enumerate(ds):
         questions.append(
@@ -157,6 +216,28 @@ def _load_hotpotqa(n=None, seed=42):
                 "correct_answer": row["answer"],
                 "question_id": _make_question_id("hotpotqa", i, row["question"]),
                 "task_type": "freeform",
+            }
+        )
+    random.Random(seed).shuffle(questions)
+    return questions[:n] if n else questions
+
+
+def _load_math500(n=None, seed=42):
+    from datasets import load_dataset
+    import random
+
+    ds = load_dataset("HuggingFaceH4/MATH-500", split="test")
+    questions = []
+    for i, row in enumerate(ds):
+        questions.append(
+            {
+                "question": row["problem"],
+                "correct_answer": row["answer"],
+                "question_id": _make_question_id("math500", i, row["problem"]),
+                "task_type": "numeric",
+                "level": row["level"],
+                "subject": row["subject"],
+                "solution": row["solution"],
             }
         )
     random.Random(seed).shuffle(questions)
